@@ -1,6 +1,8 @@
-# bot-canvas-dash
+# xMarket-bots
 
 > Multi-bot trading command center built with React, TypeScript, Tailwind, shadcn/ui, Firebase and Supabase.
+
+Production deploy: https://loicm.github.io/xMarket-bots/ (SPA served under `/xMarket-bots/` on GitHub Pages).
 
 ## Overview
 
@@ -28,7 +30,7 @@ The SPA (React/Vite) surfaces live P&L, ROI, trades, open/closed positions, code
 
 ```bash
 git clone <repo-url>
-cd bot-canvas-dash
+cd xMarket-bots
 npm install
 npm run dev
 ```
