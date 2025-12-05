@@ -1,0 +1,35 @@
+[
+  {
+    "id": "momentum",
+    "displayName": "Momentum Bot",
+    "initialCredits": 1000000
+  },
+  {
+    "id": "mean_reversion",
+    "displayName": "Mean Reversion Bot",
+    "initialCredits": 1000000,
+    "emailEnv": "BOT_MEAN_EMAIL",
+    "passwordEnv": "BOT_MEAN_PASSWORD"
+  },
+  {
+    "id": "trend_follower",
+    "displayName": "Trend Follower Bot",
+    "initialCredits": 1000000,
+    "emailEnv": "BOT_TREND_EMAIL",
+    "passwordEnv": "BOT_TREND_PASSWORD"
+  },
+  {
+    "id": "ml_mean",
+    "displayName": "ML Mean Bot",
+    "initialCredits": 1000000,
+    "emailEnv": "BOT_MLMEAN_EMAIL",
+    "passwordEnv": "BOT_MLMEAN_PASSWORD"
+  },
+  {
+    "id": "ml_trend",
+    "displayName": "ML Trend Bot",
+    "initialCredits": 1000000,
+    "emailEnv": "BOT_MLTREND_EMAIL",
+    "passwordEnv": "BOT_MLTREND_PASSWORD"
+  }
+]

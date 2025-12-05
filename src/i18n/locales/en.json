@@ -1,0 +1,73 @@
+{
+  "dashboard": {
+    "title": "Trading Bots Dashboard",
+    "subtitle": "Monitor and manage your algorithmic trading bots",
+    "totalPnl": "Total P&L",
+    "avgRoi": "Average ROI",
+    "activeBots": "Active Bots",
+    "totalTrades": "Total Trades",
+    "myBots": "My Bots"
+  },
+  "botCard": {
+    "roi": "ROI",
+    "pnl": "P&L",
+    "winRate": "Win Rate",
+    "trades": "Trades",
+    "runningSince": "Running since",
+    "viewDetails": "View details"
+  },
+  "botDetail": {
+    "back": "Back",
+    "strategy": "Strategy",
+    "code": "Code",
+    "performance": "Performance",
+    "roi": "ROI",
+    "pnl": "P&L",
+    "winRate": "Win Rate",
+    "trades": "Trades",
+    "runningSince": "Running since",
+    "lastPause": "Last pause",
+    "status": {
+      "active": "Active",
+      "paused": "Paused",
+      "stopped": "Stopped"
+    },
+    "liveMetrics": {
+      "title": "Live metrics",
+      "cash": "Cash",
+      "marketValue": "Positions value",
+      "lastTrade": "Last trade",
+      "never": "Never"
+    },
+    "chart": {
+      "liquidity": "Liquidity",
+      "positionValue": "Position Value",
+      "total": "Total"
+    },
+    "notFound": {
+      "title": "Bot not found",
+      "cta": "Back to dashboard"
+    },
+    "openTrades": "Open Positions",
+    "openTradesEmpty": "No open positions yet.",
+    "closedTrades": "Closed Trades",
+    "closedTradesEmpty": "No trades have been closed yet.",
+    "table": {
+      "company": "Company",
+      "quantity": "Quantity",
+      "purchasePrice": "Purchase Price",
+      "purchaseValue": "Purchase Value",
+      "purchaseDate": "Purchase Date",
+      "currentPrice": "Current Price",
+      "currentValue": "Current Value",
+      "sellPrice": "Sell Price",
+      "sellValue": "Sell Value",
+      "sellDate": "Sell Date",
+      "pnl": "P&L",
+      "lotBreakdown": "Lot breakdown",
+      "expand": "Expand row",
+      "collapse": "Collapse row",
+      "sortedBy": "Sorted by"
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "AAPL": "ny/apple.png",
+  "MSFT": "ny/microsoft.png",
+  "NVDA": "ny/nvidia.png",
+  "TSLA": "ny/tesla.png",
+  "AMZN": "ny/amazon.png",
+  "META": "ny/meta.png",
+  "GOOGL": "ny/google.webp",
+  "NFLX": "ny/netflix.png",
+  "ADBE": "ny/adobe.png",
+  "AMD": "ny/amd.webp"
+}

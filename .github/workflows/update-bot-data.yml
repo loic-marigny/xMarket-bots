@@ -1,0 +1,52 @@
+name: Update Bot Data
+
+on:
+  # Allows other bot workflows to push fresh data through workflow_dispatch
+  workflow_dispatch:
+    inputs:
+      bot_data:
+        description: 'Bot data JSON'
+        required: true
+        type: string
+  # Also runs when data files are pushed directly to the repo
+  push:
+    paths:
+      - 'public/data/bots.json'
+      - 'public/data/trades/*.json'
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  update-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Update bot data (if provided)
+        if: github.event.inputs.bot_data != ''
+        run: |
+          echo '${{ github.event.inputs.bot_data }}' > public/data/bots.json
+      
+      - name: Commit changes
+        if: github.event.inputs.bot_data != ''
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add public/data/bots.json
+          git diff --quiet && git diff --staged --quiet || git commit -m "Update bot data [skip ci]"
+          git push
+      
+      - name: Trigger deployment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'deploy.yml',
+              ref: 'main'
+            })

@@ -1,0 +1,73 @@
+{
+  "dashboard": {
+    "title": "Tableau de bord des bots",
+    "subtitle": "Surveillez et gérez vos bots de trading",
+    "totalPnl": "P&L total",
+    "avgRoi": "ROI moyen",
+    "activeBots": "Bots actifs",
+    "totalTrades": "Trades totaux",
+    "myBots": "Mes bots"
+  },
+  "botCard": {
+    "roi": "ROI",
+    "pnl": "P&L",
+    "winRate": "Taux de réussite",
+    "trades": "Trades",
+    "runningSince": "Depuis",
+    "viewDetails": "Voir les détails"
+  },
+  "botDetail": {
+    "back": "Retour",
+    "strategy": "Stratégie",
+    "code": "Code",
+    "performance": "Performance",
+    "roi": "ROI",
+    "pnl": "P&L",
+    "winRate": "Taux de réussite",
+    "trades": "Trades",
+    "runningSince": "Depuis",
+    "lastPause": "Dernière pause",
+    "status": {
+      "active": "Actif",
+      "paused": "En pause",
+      "stopped": "Arrêté"
+    },
+    "liveMetrics": {
+      "title": "Statistiques en direct",
+      "cash": "Trésorerie",
+      "marketValue": "Valeur des positions",
+      "lastTrade": "Dernier trade",
+      "never": "Jamais"
+    },
+    "chart": {
+      "liquidity": "Liquidité",
+      "positionValue": "Valeur de position",
+      "total": "Total"
+    },
+    "notFound": {
+      "title": "Bot introuvable",
+      "cta": "Retour à l'accueil"
+    },
+    "openTrades": "Positions en cours",
+    "openTradesEmpty": "Aucune position ouverte pour le moment.",
+    "closedTrades": "Trades terminés",
+    "closedTradesEmpty": "Aucun trade clôturé pour le moment.",
+    "table": {
+      "company": "Entreprise",
+      "quantity": "Quantité",
+      "purchasePrice": "Prix d'achat",
+      "purchaseValue": "Valeur d'achat",
+      "purchaseDate": "Date d'achat",
+      "currentPrice": "Prix actuel",
+      "currentValue": "Valeur actuelle",
+      "sellPrice": "Prix de vente",
+      "sellValue": "Valeur de vente",
+      "sellDate": "Date de vente",
+      "pnl": "P&L",
+      "lotBreakdown": "Détail des lots",
+      "expand": "Déplier la ligne",
+      "collapse": "Replier la ligne",
+      "sortedBy": "Trié par"
+    }
+  }
+}

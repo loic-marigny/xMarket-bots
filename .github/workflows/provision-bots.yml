@@ -1,0 +1,52 @@
+name: Provision Bot Accounts
+
+on:
+  workflow_dispatch:
+    inputs:
+      config_path:
+        description: "Relative path to bots JSON config"
+        required: false
+        default: "scripts/admin/bots.json"
+
+jobs:
+  provision:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      BOT_MOMENTUM_EMAIL: ${{ secrets.BOT_MOMENTUM_EMAIL }}
+      BOT_MOMENTUM_PASSWORD: ${{ secrets.BOT_MOMENTUM_PASSWORD }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Write Firebase Admin key
+        run: echo "${FIREBASE_ADMIN_CREDENTIALS_JSON}" > admin-key.json
+        env:
+          FIREBASE_ADMIN_CREDENTIALS_JSON: ${{ secrets.FIREBASE_ADMIN_CREDENTIALS }}
+
+      - name: Provision bots
+        env:
+          FIREBASE_ADMIN_CREDENTIALS: ${{ github.workspace }}/admin-key.json
+        run: npx tsx scripts/admin/provision-bots.ts ${{ github.event.inputs.config_path }}
+
+      - name: Upload provisioning report
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bots-output
+          path: scripts/admin/bots-output.json
+          if-no-files-found: ignore
+
+      - name: Clean up Admin key
+        if: always()
+        run: rm -f admin-key.json

@@ -1,0 +1,78 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Root design tokens for the dashboard. All colors stay in HSL for predictable theming. */
+@layer base {
+  :root {
+    /* Core surfaces */
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
+    --card: 217 33% 17%;
+    --card-foreground: 210 40% 98%;
+    --popover: 217 33% 17%;
+    --popover-foreground: 210 40% 98%;
+
+    /* Brand and accents */
+    --primary: 189 85% 55%;
+    --primary-foreground: 222 47% 11%;
+    --secondary: 217 33% 22%;
+    --secondary-foreground: 210 40% 98%;
+    --accent: 189 85% 55%;
+    --accent-foreground: 222 47% 11%;
+
+    /* Supporting states */
+    --muted: 217 33% 22%;
+    --muted-foreground: 215 20% 65%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 210 40% 98%;
+    --success: 142 76% 36%;
+    --success-foreground: 210 40% 98%;
+
+    /* Controls and layout */
+    --border: 217 33% 22%;
+    --input: 217 33% 22%;
+    --ring: 189 85% 55%;
+    --radius: 0.75rem;
+
+    /* Data visualization */
+    --chart-1: 189 85% 55%;
+    --chart-2: 142 76% 36%;
+    --chart-3: 271 91% 65%;
+    --chart-4: 48 96% 53%;
+    --chart-5: 0 72% 51%;
+
+    /* Sidebar defaults (light) */
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  /* Sidebar overrides when the `.dark` utility is toggled on `<html>` */
+  .dark {
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+/* Global defaults shared across themes */
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
