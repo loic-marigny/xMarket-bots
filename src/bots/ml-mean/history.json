@@ -10246,5 +10246,12 @@
     "reason": "GitHub workflow run",
     "actor": "loic-marigny",
     "source": "Run Trading Bots"
+  },
+  {
+    "timestamp": "2026-02-12T14:52:53.699Z",
+    "action": "activated",
+    "reason": "GitHub workflow run",
+    "actor": "loic-marigny",
+    "source": "Run Trading Bots"
   }
 ]
