@@ -14,7 +14,7 @@ import { fr, enUS } from "date-fns/locale";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useWealthHistory } from "@/hooks/useWealthHistory";
 import { useLiveBotStats } from "@/hooks/useLiveBotStats";
-import { deriveBotLifecycleState } from "@/lib/botLifecycle";
+import { deriveBotLifecycleState, getLatestManualResetAt } from "@/lib/botLifecycle";
 import { Markdown } from "@/components/Markdown";
 import { StockLogo } from "@/components/StockLogo";
 import { cn } from "@/lib/utils";
@@ -31,11 +31,16 @@ const BotDetail = () => {
   const trendFollowerUid = import.meta.env.VITE_BOT_TREND_UID;
   const mlMeanUid = import.meta.env.VITE_BOT_MLMEAN_UID;
   const mlTrendUid = import.meta.env.VITE_BOT_MLTREND_UID;
-  const { data: momentumOverride } = useLiveBotStats({ botId: "1", firestoreUid: momentumUid });
-  const { data: meanReversionOverride } = useLiveBotStats({ botId: "2", firestoreUid: meanReversionUid });
-  const { data: trendFollowerOverride } = useLiveBotStats({ botId: "3", firestoreUid: trendFollowerUid });
-  const { data: mlMeanOverride } = useLiveBotStats({ botId: "5", firestoreUid: mlMeanUid });
-  const { data: mlTrendOverride } = useLiveBotStats({ botId: "6", firestoreUid: mlTrendUid });
+  const momentumBot = mockBots.find((bot) => bot.id === "1");
+  const meanReversionBot = mockBots.find((bot) => bot.id === "2");
+  const trendFollowerBot = mockBots.find((bot) => bot.id === "3");
+  const mlMeanBot = mockBots.find((bot) => bot.id === "5");
+  const mlTrendBot = mockBots.find((bot) => bot.id === "6");
+  const { data: momentumOverride } = useLiveBotStats({ botId: "1", firestoreUid: momentumUid, resetAt: momentumBot ? getLatestManualResetAt(momentumBot) : undefined });
+  const { data: meanReversionOverride } = useLiveBotStats({ botId: "2", firestoreUid: meanReversionUid, resetAt: meanReversionBot ? getLatestManualResetAt(meanReversionBot) : undefined });
+  const { data: trendFollowerOverride } = useLiveBotStats({ botId: "3", firestoreUid: trendFollowerUid, resetAt: trendFollowerBot ? getLatestManualResetAt(trendFollowerBot) : undefined });
+  const { data: mlMeanOverride } = useLiveBotStats({ botId: "5", firestoreUid: mlMeanUid, resetAt: mlMeanBot ? getLatestManualResetAt(mlMeanBot) : undefined });
+  const { data: mlTrendOverride } = useLiveBotStats({ botId: "6", firestoreUid: mlTrendUid, resetAt: mlTrendBot ? getLatestManualResetAt(mlTrendBot) : undefined });
   // Build a quick lookup so overrides can be merged into the mock definition.
   const overridesMap = useMemo(() => {
     const map = new Map<string, Partial<Bot>>();
@@ -201,7 +206,7 @@ const BotDetail = () => {
       : bot.id === "6"
       ? mlTrendUid
       : undefined);
-  const { history: wealthHistory } = useWealthHistory(fallbackUid);
+  const { history: wealthHistory } = useWealthHistory(fallbackUid, getLatestManualResetAt(bot));
 
   // Use Firestore wealth history when available, otherwise default to mock points.
   const performanceData =

@@ -50,6 +50,7 @@ function formatDate(value?: Timestamp | { toDate?: () => Date } | number): strin
 export interface LiveBotStatsOptions {
   botId: string;
   firestoreUid?: string;
+  resetAt?: string;
 }
 
 /**
@@ -57,7 +58,7 @@ export interface LiveBotStatsOptions {
  * Returns an override payload that mirrors the `Bot` shape so mock data can
  * be updated in place with real balances, orders, and trade history.
  */
-export function useLiveBotStats({ botId, firestoreUid }: LiveBotStatsOptions) {
+export function useLiveBotStats({ botId, firestoreUid, resetAt }: LiveBotStatsOptions) {
   const [override, setOverride] = useState<Partial<Bot> & { liveMetrics?: LiveMetrics } | null>(null);
   const [loading, setLoading] = useState(Boolean(firestoreUid));
   const [error, setError] = useState<string | null>(null);
@@ -68,6 +69,8 @@ export function useLiveBotStats({ botId, firestoreUid }: LiveBotStatsOptions) {
       return;
     }
     let cancelled = false;
+
+    const resetAtTs = resetAt ? Date.parse(resetAt) : 0;
 
     const fetchData = async () => {
       setLoading(true);
@@ -83,31 +86,41 @@ export function useLiveBotStats({ botId, firestoreUid }: LiveBotStatsOptions) {
         ]);
 
         const userData = userSnap.data() ?? {};
-        const initialCredits =
-          typeof userData.initialCredits === "number" && Number.isFinite(userData.initialCredits)
-            ? userData.initialCredits
-            : DEFAULT_INITIAL_CREDITS;
-        const cash =
-          typeof userData.cash === "number" && Number.isFinite(userData.cash)
-            ? userData.cash
-            : initialCredits;
+        const hasReset = Number.isFinite(resetAtTs) && resetAtTs > 0;
+        const initialCredits = hasReset
+          ? DEFAULT_INITIAL_CREDITS
+          : typeof userData.initialCredits === "number" && Number.isFinite(userData.initialCredits)
+          ? userData.initialCredits
+          : DEFAULT_INITIAL_CREDITS;
+        const cash = hasReset
+          ? initialCredits
+          : typeof userData.cash === "number" && Number.isFinite(userData.cash)
+          ? userData.cash
+          : initialCredits;
 
-          const normalizedOrders = normalizeOrders(ordersSnap.docs);
-          const firstTradeAt =
-            normalizedOrders.length > 0
-              ? new Date(Math.min(...normalizedOrders.map((order) => order.ts))).toISOString()
-              : undefined;
-          const closedTrades = mapClosedTradeEntries(buildClosedTradeEntries(normalizedOrders));
-          const lastTradeAt =
-            normalizedOrders.length > 0
-              ? new Date(Math.max(...normalizedOrders.map((order) => order.ts))).toISOString()
-              : undefined;
+        const normalizedOrders = normalizeOrders(ordersSnap.docs).filter(
+          (order) => !hasReset || order.ts >= resetAtTs,
+        );
+        const firstTradeAt =
+          normalizedOrders.length > 0
+            ? new Date(Math.min(...normalizedOrders.map((order) => order.ts))).toISOString()
+            : undefined;
+        const closedTrades = mapClosedTradeEntries(buildClosedTradeEntries(normalizedOrders));
+        const lastTradeAt =
+          normalizedOrders.length > 0
+            ? new Date(Math.max(...normalizedOrders.map((order) => order.ts))).toISOString()
+            : undefined;
 
         const aggregatedPositions = aggregateOpenPositions(normalizedOrders);
         const openTrades: Trade[] = [];
         let marketValue = 0;
         for (const position of positionsSnap.docs) {
           const data = position.data() as any;
+          const updatedAt = formatDate(data?.updatedAt);
+          if (hasReset && updatedAt) {
+            const updatedAtTs = Date.parse(updatedAt);
+            if (Number.isFinite(updatedAtTs) && updatedAtTs < resetAtTs) continue;
+          }
           const symbol = typeof data?.symbol === "string" && data.symbol.trim() ? data.symbol : position.id;
           if (!symbol) continue;
           const aggregated = aggregatedPositions.find((entry) => entry.symbol === symbol);
@@ -139,7 +152,8 @@ export function useLiveBotStats({ botId, firestoreUid }: LiveBotStatsOptions) {
           });
         }
 
-        const totalValue = cash + marketValue;
+        const effectiveCash = hasReset && normalizedOrders.length === 0 && openTrades.length === 0 ? initialCredits : cash;
+        const totalValue = effectiveCash + marketValue;
         const stats = computeBotStats(initialCredits, totalValue, normalizedOrders);
         const totalPnL = stats.pnl;
         const roi = stats.roi * 100;
@@ -162,7 +176,7 @@ export function useLiveBotStats({ botId, firestoreUid }: LiveBotStatsOptions) {
           status,
           openTrades,
           closedTrades,
-          liveMetrics: { cash, initialCredits, marketValue, lastTradeAt },
+          liveMetrics: { cash: effectiveCash, initialCredits, marketValue, lastTradeAt },
           ...startDateOverride,
         };
 
@@ -185,7 +199,7 @@ export function useLiveBotStats({ botId, firestoreUid }: LiveBotStatsOptions) {
       cancelled = true;
       clearInterval(interval);
     };
-  }, [botId, firestoreUid]);
+  }, [botId, firestoreUid, resetAt]);
 
   return { data: override, loading, error };
 }

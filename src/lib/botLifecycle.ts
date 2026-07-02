@@ -7,6 +7,20 @@ export interface BotLifecycleState {
   firstActivatedAt?: string;
 }
 
+export const getLatestManualResetAt = (
+  bot: Pick<Bot, "activationHistory">,
+): string | undefined => {
+  const resetEvents = [...(bot.activationHistory ?? [])]
+    .filter(
+      (event) =>
+        event?.timestamp &&
+        (event.reason === "Manual reset" || event.actor === "local-user" || event.source === "manual-reset"),
+    )
+    .sort((a, b) => parseTimestamp(b.timestamp) - parseTimestamp(a.timestamp));
+
+  return resetEvents[0]?.timestamp;
+};
+
 const parseTimestamp = (value?: string): number => {
   if (!value) return 0;
   const ts = Date.parse(value);

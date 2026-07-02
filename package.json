@@ -15,7 +15,8 @@
     "bot:ml-mean": "tsx src/bots/ml-mean/bot.ts",
     "bot:ml-trend": "tsx src/bots/ml-trend/bot.ts",
     "bot:record-activation": "tsx scripts/update-bot-activation-history.ts",
-    "bot:reset": "tsx scripts/reset-bots.ts"
+    "bot:reset": "tsx scripts/reset-bots.ts",
+    "bot:reset-live": "tsx scripts/admin/reset-bot-state.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

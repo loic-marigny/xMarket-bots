@@ -7,7 +7,7 @@ import { Activity } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useLiveBotStats } from "@/hooks/useLiveBotStats";
-import { deriveBotLifecycleState } from "@/lib/botLifecycle";
+import { deriveBotLifecycleState, getLatestManualResetAt } from "@/lib/botLifecycle";
 
 /**
  * Home dashboard that surfaces aggregate stats and the list of bots.
@@ -20,12 +20,17 @@ const Index = () => {
   const trendFollowerUid = import.meta.env.VITE_BOT_TREND_UID;
   const mlMeanUid = import.meta.env.VITE_BOT_MLMEAN_UID;
   const mlTrendUid = import.meta.env.VITE_BOT_MLTREND_UID;
+  const momentumBot = mockBots.find((bot) => bot.id === "1");
+  const meanReversionBot = mockBots.find((bot) => bot.id === "2");
+  const trendFollowerBot = mockBots.find((bot) => bot.id === "3");
+  const mlMeanBot = mockBots.find((bot) => bot.id === "5");
+  const mlTrendBot = mockBots.find((bot) => bot.id === "6");
   // Each bot can optionally stream live overrides if the Firestore UID is configured.
-  const { data: momentumOverride, loading: momentumLoading } = useLiveBotStats({ botId: "1", firestoreUid: momentumUid });
-  const { data: meanReversionOverride, loading: meanReversionLoading } = useLiveBotStats({ botId: "2", firestoreUid: meanReversionUid });
-  const { data: trendFollowerOverride, loading: trendFollowerLoading } = useLiveBotStats({ botId: "3", firestoreUid: trendFollowerUid });
-  const { data: mlMeanOverride, loading: mlMeanLoading } = useLiveBotStats({ botId: "5", firestoreUid: mlMeanUid });
-  const { data: mlTrendOverride, loading: mlTrendLoading } = useLiveBotStats({ botId: "6", firestoreUid: mlTrendUid });
+  const { data: momentumOverride, loading: momentumLoading } = useLiveBotStats({ botId: "1", firestoreUid: momentumUid, resetAt: momentumBot ? getLatestManualResetAt(momentumBot) : undefined });
+  const { data: meanReversionOverride, loading: meanReversionLoading } = useLiveBotStats({ botId: "2", firestoreUid: meanReversionUid, resetAt: meanReversionBot ? getLatestManualResetAt(meanReversionBot) : undefined });
+  const { data: trendFollowerOverride, loading: trendFollowerLoading } = useLiveBotStats({ botId: "3", firestoreUid: trendFollowerUid, resetAt: trendFollowerBot ? getLatestManualResetAt(trendFollowerBot) : undefined });
+  const { data: mlMeanOverride, loading: mlMeanLoading } = useLiveBotStats({ botId: "5", firestoreUid: mlMeanUid, resetAt: mlMeanBot ? getLatestManualResetAt(mlMeanBot) : undefined });
+  const { data: mlTrendOverride, loading: mlTrendLoading } = useLiveBotStats({ botId: "6", firestoreUid: mlTrendUid, resetAt: mlTrendBot ? getLatestManualResetAt(mlTrendBot) : undefined });
 
   const liveOverrides = useMemo(
     () =>

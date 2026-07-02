@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { collection, onSnapshot, orderBy, query, type QueryDocumentSnapshot, type Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { PerformancePoint } from "@/types/bot";
@@ -34,9 +34,14 @@ const docToPoint = (docSnap: QueryDocumentSnapshot): PerformancePoint => {
  * Streams the cumulative wealth history (cash + stocks) for a bot.
  * Falls back to `null` when the Firestore UID is missing so mock data can be used.
  */
-export function useWealthHistory(uid?: string | null) {
+export function useWealthHistory(uid?: string | null, resetAt?: string | null) {
   const [history, setHistory] = useState<PerformancePoint[] | null>(null);
   const [loading, setLoading] = useState<boolean>(Boolean(uid));
+  const resetAtTs = useMemo(() => {
+    if (!resetAt) return 0;
+    const parsed = Date.parse(resetAt);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }, [resetAt]);
 
   useEffect(() => {
     if (!uid) {
@@ -55,9 +60,15 @@ export function useWealthHistory(uid?: string | null) {
     return onSnapshot(
       q,
       (snapshot) => {
-        const entries = snapshot.docs.map(docToPoint);
+        const entries = snapshot.docs
+          .map(docToPoint)
+          .filter((entry) => {
+            if (!resetAtTs) return true;
+            const ts = Date.parse(entry.date);
+            return Number.isFinite(ts) && ts >= resetAtTs;
+          });
         console.debug("[useWealthHistory] loaded", entries.length, "points for", uid);
-        setHistory(entries);
+        setHistory(entries.length ? entries : null);
         setLoading(false);
       },
       (error) => {
@@ -66,7 +77,7 @@ export function useWealthHistory(uid?: string | null) {
         setLoading(false);
       },
     );
-  }, [uid]);
+  }, [uid, resetAtTs]);
 
   return { history, loading };
 }
