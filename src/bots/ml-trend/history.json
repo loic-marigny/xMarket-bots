@@ -5,5 +5,12 @@
     "reason": "Manual reset",
     "actor": "local-user",
     "source": "manual-reset"
+  },
+  {
+    "timestamp": "2026-07-10T17:50:20.210Z",
+    "action": "activated",
+    "reason": "GitHub workflow run",
+    "actor": "loic-marigny",
+    "source": "Run Trading Bots"
   }
 ]
