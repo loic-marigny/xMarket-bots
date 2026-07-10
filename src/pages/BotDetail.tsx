@@ -26,37 +26,28 @@ import { cn } from "@/lib/utils";
 const BotDetail = () => {
   const { t, i18n } = useTranslation();
   const { id } = useParams();
-  const momentumUid = import.meta.env.VITE_BOT_MOMENTUM_UID;
-  const meanReversionUid = import.meta.env.VITE_BOT_MEAN_UID;
-  const trendFollowerUid = import.meta.env.VITE_BOT_TREND_UID;
-  const mlMeanUid = import.meta.env.VITE_BOT_MLMEAN_UID;
-  const mlTrendUid = import.meta.env.VITE_BOT_MLTREND_UID;
-  const momentumBot = mockBots.find((bot) => bot.id === "1");
-  const meanReversionBot = mockBots.find((bot) => bot.id === "2");
-  const trendFollowerBot = mockBots.find((bot) => bot.id === "3");
-  const mlMeanBot = mockBots.find((bot) => bot.id === "5");
-  const mlTrendBot = mockBots.find((bot) => bot.id === "6");
-  const { data: momentumOverride } = useLiveBotStats({ botId: "1", firestoreUid: momentumUid, resetAt: momentumBot ? getLatestManualResetAt(momentumBot) : undefined });
-  const { data: meanReversionOverride } = useLiveBotStats({ botId: "2", firestoreUid: meanReversionUid, resetAt: meanReversionBot ? getLatestManualResetAt(meanReversionBot) : undefined });
-  const { data: trendFollowerOverride } = useLiveBotStats({ botId: "3", firestoreUid: trendFollowerUid, resetAt: trendFollowerBot ? getLatestManualResetAt(trendFollowerBot) : undefined });
-  const { data: mlMeanOverride } = useLiveBotStats({ botId: "5", firestoreUid: mlMeanUid, resetAt: mlMeanBot ? getLatestManualResetAt(mlMeanBot) : undefined });
-  const { data: mlTrendOverride } = useLiveBotStats({ botId: "6", firestoreUid: mlTrendUid, resetAt: mlTrendBot ? getLatestManualResetAt(mlTrendBot) : undefined });
-  // Build a quick lookup so overrides can be merged into the mock definition.
-  const overridesMap = useMemo(() => {
-    const map = new Map<string, Partial<Bot>>();
-    [momentumOverride, meanReversionOverride, trendFollowerOverride, mlMeanOverride, mlTrendOverride].forEach((override) => {
-      if (override?.id) {
-        map.set(override.id, override);
-      }
-    });
-    return map;
-  }, [momentumOverride, meanReversionOverride, trendFollowerOverride, mlMeanOverride, mlTrendOverride]);
   const baseBot = mockBots.find((b) => b.id === id);
-  const bot = baseBot
-    ? overridesMap.get(baseBot.id)
-      ? { ...baseBot, ...overridesMap.get(baseBot.id)! }
-      : baseBot
-    : undefined;
+  const currentUid =
+    id === "1"
+      ? import.meta.env.VITE_BOT_MOMENTUM_UID
+      : id === "2"
+      ? import.meta.env.VITE_BOT_MEAN_UID
+      : id === "3"
+      ? import.meta.env.VITE_BOT_TREND_UID
+      : id === "5"
+      ? import.meta.env.VITE_BOT_MLMEAN_UID
+      : id === "6"
+      ? import.meta.env.VITE_BOT_MLTREND_UID
+      : undefined;
+  const resetAt = baseBot ? getLatestManualResetAt(baseBot) : undefined;
+  const { data: liveOverride } = useLiveBotStats({
+    botId: id ?? "",
+    firestoreUid: currentUid,
+    resetAt,
+    refreshMs: 5 * 60_000,
+    maxOrders: 100,
+  });
+  const bot = baseBot ? (liveOverride ? { ...baseBot, ...liveOverride } : baseBot) : undefined;
   const locale = i18n.language === "fr" ? fr : enUS;
   const localeCode = i18n.language === "fr" ? "fr-FR" : "en-US";
   const [expandedOpenTrade, setExpandedOpenTrade] = useState<string | null>(null);
@@ -193,19 +184,7 @@ const BotDetail = () => {
   };
 
   // Fallback to a known bot UID when the API doesn't return one yet.
-  const fallbackUid =
-    bot.firestoreUid ??
-    (bot.id === "1"
-      ? momentumUid
-      : bot.id === "2"
-      ? meanReversionUid
-      : bot.id === "3"
-      ? trendFollowerUid
-      : bot.id === "5"
-      ? mlMeanUid
-      : bot.id === "6"
-      ? mlTrendUid
-      : undefined);
+  const fallbackUid = bot.firestoreUid ?? currentUid;
   const { history: wealthHistory } = useWealthHistory(fallbackUid, getLatestManualResetAt(bot));
 
   // Use Firestore wealth history when available, otherwise default to mock points.

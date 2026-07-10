@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { collection, doc, getDoc, getDocs, Timestamp, type QueryDocumentSnapshot } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, limit, orderBy, query, Timestamp, type QueryDocumentSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { supabaseClient } from "@/lib/supabaseClient";
 import type { Bot, Trade } from "@/types/bot";
@@ -51,6 +51,8 @@ export interface LiveBotStatsOptions {
   botId: string;
   firestoreUid?: string;
   resetAt?: string;
+  refreshMs?: number;
+  maxOrders?: number;
 }
 
 /**
@@ -58,7 +60,13 @@ export interface LiveBotStatsOptions {
  * Returns an override payload that mirrors the `Bot` shape so mock data can
  * be updated in place with real balances, orders, and trade history.
  */
-export function useLiveBotStats({ botId, firestoreUid, resetAt }: LiveBotStatsOptions) {
+export function useLiveBotStats({
+  botId,
+  firestoreUid,
+  resetAt,
+  refreshMs = 5 * 60_000,
+  maxOrders = 100,
+}: LiveBotStatsOptions) {
   const [override, setOverride] = useState<Partial<Bot> & { liveMetrics?: LiveMetrics } | null>(null);
   const [loading, setLoading] = useState(Boolean(firestoreUid));
   const [error, setError] = useState<string | null>(null);
@@ -77,7 +85,11 @@ export function useLiveBotStats({ botId, firestoreUid, resetAt }: LiveBotStatsOp
       setError(null);
       try {
         const userRef = doc(db, "users", firestoreUid);
-        const ordersRef = collection(db, "users", firestoreUid, "orders");
+        const ordersRef = query(
+          collection(db, "users", firestoreUid, "orders"),
+          orderBy("ts", "desc"),
+          limit(maxOrders),
+        );
         const positionsRef = collection(db, "users", firestoreUid, "positions");
         const [userSnap, ordersSnap, positionsSnap] = await Promise.all([
           getDoc(userRef),
@@ -194,12 +206,18 @@ export function useLiveBotStats({ botId, firestoreUid, resetAt }: LiveBotStatsOp
     };
 
     fetchData();
-    const interval = setInterval(fetchData, 60_000);
+    if (refreshMs <= 0) {
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const interval = setInterval(fetchData, refreshMs);
     return () => {
       cancelled = true;
       clearInterval(interval);
     };
-  }, [botId, firestoreUid, resetAt]);
+  }, [botId, firestoreUid, maxOrders, refreshMs, resetAt]);
 
   return { data: override, loading, error };
 }

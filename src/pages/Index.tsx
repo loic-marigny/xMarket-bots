@@ -2,11 +2,9 @@ import { mockBots } from "@/data/mockBots";
 import type { Bot } from "@/types/bot";
 import { BotCard } from "@/components/BotCard";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
-import { SiteLoader } from "@/components/SiteLoader";
 import { Activity } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { useLiveBotStats } from "@/hooks/useLiveBotStats";
 import { deriveBotLifecycleState, getLatestManualResetAt } from "@/lib/botLifecycle";
 
 /**
@@ -15,40 +13,16 @@ import { deriveBotLifecycleState, getLatestManualResetAt } from "@/lib/botLifecy
  */
 const Index = () => {
   const { t } = useTranslation();
-  const momentumUid = import.meta.env.VITE_BOT_MOMENTUM_UID;
-  const meanReversionUid = import.meta.env.VITE_BOT_MEAN_UID;
-  const trendFollowerUid = import.meta.env.VITE_BOT_TREND_UID;
-  const mlMeanUid = import.meta.env.VITE_BOT_MLMEAN_UID;
-  const mlTrendUid = import.meta.env.VITE_BOT_MLTREND_UID;
-  const momentumBot = mockBots.find((bot) => bot.id === "1");
-  const meanReversionBot = mockBots.find((bot) => bot.id === "2");
-  const trendFollowerBot = mockBots.find((bot) => bot.id === "3");
-  const mlMeanBot = mockBots.find((bot) => bot.id === "5");
-  const mlTrendBot = mockBots.find((bot) => bot.id === "6");
-  // Each bot can optionally stream live overrides if the Firestore UID is configured.
-  const { data: momentumOverride, loading: momentumLoading } = useLiveBotStats({ botId: "1", firestoreUid: momentumUid, resetAt: momentumBot ? getLatestManualResetAt(momentumBot) : undefined });
-  const { data: meanReversionOverride, loading: meanReversionLoading } = useLiveBotStats({ botId: "2", firestoreUid: meanReversionUid, resetAt: meanReversionBot ? getLatestManualResetAt(meanReversionBot) : undefined });
-  const { data: trendFollowerOverride, loading: trendFollowerLoading } = useLiveBotStats({ botId: "3", firestoreUid: trendFollowerUid, resetAt: trendFollowerBot ? getLatestManualResetAt(trendFollowerBot) : undefined });
-  const { data: mlMeanOverride, loading: mlMeanLoading } = useLiveBotStats({ botId: "5", firestoreUid: mlMeanUid, resetAt: mlMeanBot ? getLatestManualResetAt(mlMeanBot) : undefined });
-  const { data: mlTrendOverride, loading: mlTrendLoading } = useLiveBotStats({ botId: "6", firestoreUid: mlTrendUid, resetAt: mlTrendBot ? getLatestManualResetAt(mlTrendBot) : undefined });
-
-  const liveOverrides = useMemo(
+  // Keep the dashboard on the lightweight local dataset.
+  // Live Firestore reads are reserved for the bot detail page.
+  const bots = useMemo(
     () =>
-      [momentumOverride, meanReversionOverride, trendFollowerOverride, mlMeanOverride, mlTrendOverride].filter(
-        (override): override is Partial<Bot> => Boolean(override),
-      ),
-    [momentumOverride, meanReversionOverride, trendFollowerOverride, mlMeanOverride, mlTrendOverride],
+      mockBots.map((bot) => ({
+        ...bot,
+        startDate: getLatestManualResetAt(bot) ?? bot.startDate,
+      })),
+    [],
   );
-
-  // Reduce the mock dataset with any live overrides to hydrate ROI/PnL in place.
-  const bots = useMemo(() => {
-    if (!liveOverrides.length) return mockBots;
-    return liveOverrides.reduce(
-      (current, override) =>
-        current.map((bot) => (bot.id === override.id ? { ...bot, ...override } : bot)),
-      mockBots,
-    );
-  }, [liveOverrides]);
 
   const lifecycleStates = useMemo(() => bots.map((bot) => deriveBotLifecycleState(bot)), [bots]);
   // Dashboard KPIs used in the hero stat cards.
@@ -56,13 +30,6 @@ const Index = () => {
   const avgRoi = bots.reduce((acc, bot) => acc + bot.roi, 0) / bots.length;
   const activeBots = lifecycleStates.filter((state) => state.status === "active").length;
   const totalTrades = bots.reduce((acc, bot) => acc + bot.trades, 0);
-
-  const loadingStates = [momentumLoading, meanReversionLoading, trendFollowerLoading, mlMeanLoading, mlTrendLoading];
-  const waitingForLiveData = loadingStates.some(Boolean) && !liveOverrides.length;
-
-  if (waitingForLiveData) {
-    return <SiteLoader />;
-  }
 
   return (
     <div className="min-h-screen bg-background">
