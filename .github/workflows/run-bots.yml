@@ -17,28 +17,37 @@ jobs:
       VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
       VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
       VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+      VITE_BOT_MOMENTUM_UID: ${{ secrets.VITE_BOT_MOMENTUM_UID }}
       VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
       VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
       BOT_MOMENTUM_EMAIL: ${{ secrets.BOT_MOMENTUM_EMAIL }}
       BOT_MOMENTUM_PASSWORD: ${{ secrets.BOT_MOMENTUM_PASSWORD }}
+      BOT_MOMENTUM_SYMBOL: ${{ secrets.BOT_MOMENTUM_SYMBOL }}
+      BOT_MOMENTUM_QTY: ${{ secrets.BOT_MOMENTUM_QTY }}
       BOT_MEAN_EMAIL: ${{ secrets.BOT_MEAN_EMAIL }}
       BOT_MEAN_PASSWORD: ${{ secrets.BOT_MEAN_PASSWORD }}
       VITE_BOT_MEAN_UID: ${{ secrets.VITE_BOT_MEAN_UID }}
       BOT_MEAN_SYMBOL: ${{ secrets.BOT_MEAN_SYMBOL }}
+      BOT_MEAN_QTY: ${{ secrets.BOT_MEAN_QTY }}
       BOT_TREND_EMAIL: ${{ secrets.BOT_TREND_EMAIL }}
       BOT_TREND_PASSWORD: ${{ secrets.BOT_TREND_PASSWORD }}
       VITE_BOT_TREND_UID: ${{ secrets.VITE_BOT_TREND_UID }}
       BOT_TREND_SYMBOL: ${{ secrets.BOT_TREND_SYMBOL }}
+      BOT_TREND_QTY: ${{ secrets.BOT_TREND_QTY }}
       BOT_MLMEAN_EMAIL: ${{ secrets.BOT_MLMEAN_EMAIL }}
       BOT_MLMEAN_PASSWORD: ${{ secrets.BOT_MLMEAN_PASSWORD }}
       VITE_BOT_MLMEAN_UID: ${{ secrets.VITE_BOT_MLMEAN_UID }}
       BOT_MLMEAN_SYMBOL: ${{ secrets.BOT_MLMEAN_SYMBOL }}
       BOT_MLMEAN_QTY: ${{ secrets.BOT_MLMEAN_QTY }}
+      BOT_MLMEAN_BUY_THRESHOLD: ${{ secrets.BOT_MLMEAN_BUY_THRESHOLD }}
+      BOT_MLMEAN_SELL_THRESHOLD: ${{ secrets.BOT_MLMEAN_SELL_THRESHOLD }}
       BOT_MLTREND_EMAIL: ${{ secrets.BOT_MLTREND_EMAIL }}
       BOT_MLTREND_PASSWORD: ${{ secrets.BOT_MLTREND_PASSWORD }}
       VITE_BOT_MLTREND_UID: ${{ secrets.VITE_BOT_MLTREND_UID }}
       BOT_MLTREND_SYMBOL: ${{ secrets.BOT_MLTREND_SYMBOL }}
       BOT_MLTREND_QTY: ${{ secrets.BOT_MLTREND_QTY }}
+      BOT_MLTREND_BUY_THRESHOLD: ${{ secrets.BOT_MLTREND_BUY_THRESHOLD }}
+      BOT_MLTREND_SELL_THRESHOLD: ${{ secrets.BOT_MLTREND_SELL_THRESHOLD }}
 
     steps:
       - name: Checkout
@@ -113,10 +122,12 @@ jobs:
         run: npm run bot:record-activation -- ml-trend activated
 
       - name: Commit activation history
+        id: commit_history
         if: success()
         run: |
           if git diff --quiet --exit-code -- src/bots/momentum/history.json src/bots/mean-reversion/history.json src/bots/trend-follower/history.json src/bots/ml-mean/history.json src/bots/ml-trend/history.json; then
             echo "No activation history change detected."
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           git config user.name "github-actions[bot]"
@@ -124,3 +135,16 @@ jobs:
           git add src/bots/momentum/history.json src/bots/mean-reversion/history.json src/bots/trend-follower/history.json src/bots/ml-mean/history.json src/bots/ml-trend/history.json
           git commit -m "chore: update bot activation history [skip ci]"
           git push
+          echo "pushed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Trigger deploy workflow
+        if: success() && steps.commit_history.outputs.pushed == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'deploy.yml',
+              ref: 'main'
+            })
