@@ -19,6 +19,7 @@ import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { optionalEnv, positiveNumberEnv, withRetries } from "../shared/runtime";
 
 type SpotSide = "buy" | "sell";
 
@@ -235,13 +236,15 @@ async function runPythonLogic(input: LogicInput): Promise<LogicDecision> {
 }
 
 async function fetchLatestPriceForSymbol(supabase: AppSupabaseClient, symbol: string): Promise<number | null> {
-  const { data, error } = await supabase
-    .from("stock_market_history")
-    .select("close_value")
-    .eq("symbol", symbol)
-    .order("record_date", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const { data, error } = await withRetries(`Momentum Bot price ${symbol}`, async () =>
+    supabase
+      .from("stock_market_history")
+      .select("close_value")
+      .eq("symbol", symbol)
+      .order("record_date", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  );
 
   if (error) {
     console.warn(`[Momentum Bot] Failed to fetch price for ${symbol}`, error);
@@ -322,8 +325,8 @@ async function main() {
   const botEmail = requiredEnv("BOT_MOMENTUM_EMAIL");
   const botPassword = requiredEnv("BOT_MOMENTUM_PASSWORD");
 
-  const symbol = process.env.BOT_MOMENTUM_SYMBOL ?? "AAPL";
-  const lotSize = Number(process.env.BOT_MOMENTUM_QTY ?? "1");
+  const symbol = optionalEnv("BOT_MOMENTUM_SYMBOL") ?? "AAPL";
+  const lotSize = positiveNumberEnv("BOT_MOMENTUM_QTY", 1);
 
   console.log(`[Momentum Bot] Target symbol: ${symbol}, Lot size: ${lotSize}`);
 
@@ -336,12 +339,14 @@ async function main() {
   const db = getFirestore(app);
   const userRef = doc(db, "users", uid);
   const supabase: AppSupabaseClient = createClient(supabaseUrl, supabaseAnonKey);
-  const { data, error } = await supabase
-    .from("stock_market_history")
-    .select("record_date, close_value")
-    .eq("symbol", symbol)
-    .order("record_date", { ascending: false })
-    .limit(2);
+  const { data, error } = await withRetries(`Momentum Bot history ${symbol}`, async () =>
+    supabase
+      .from("stock_market_history")
+      .select("record_date, close_value")
+      .eq("symbol", symbol)
+      .order("record_date", { ascending: false })
+      .limit(2),
+  );
 
   if (error) throw error;
   if (!data || data.length < 2) {

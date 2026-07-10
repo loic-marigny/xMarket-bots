@@ -19,6 +19,7 @@ import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { optionalEnv, positiveNumberEnv, withRetries } from "../shared/runtime";
 
 type SpotSide = "buy" | "sell";
 
@@ -239,12 +240,14 @@ async function fetchLatestCloses(
   symbol: string,
   limitRows = 30,
 ): Promise<number[]> {
-  const { data, error } = await supabase
-    .from("stock_market_history")
-    .select("record_date, close_value")
-    .eq("symbol", symbol)
-    .order("record_date", { ascending: false })
-    .limit(limitRows);
+  const { data, error } = await withRetries(`Mean Reversion history ${symbol}`, async () =>
+    supabase
+      .from("stock_market_history")
+      .select("record_date, close_value")
+      .eq("symbol", symbol)
+      .order("record_date", { ascending: false })
+      .limit(limitRows),
+  );
 
   if (error) throw error;
   if (!data?.length) return [];
@@ -326,8 +329,8 @@ async function main() {
   const botEmail = requiredEnv("BOT_MEAN_EMAIL");
   const botPassword = requiredEnv("BOT_MEAN_PASSWORD");
 
-  const symbol = (process.env.BOT_MEAN_SYMBOL ?? "EURUSD").toUpperCase();
-  const lotSize = Number(process.env.BOT_MEAN_QTY ?? "1");
+  const symbol = (optionalEnv("BOT_MEAN_SYMBOL") ?? "EURUSD").toUpperCase();
+  const lotSize = positiveNumberEnv("BOT_MEAN_QTY", 1);
 
   console.log(`[Mean Reversion Bot] Target symbol: ${symbol}, Lot size: ${lotSize}`);
 

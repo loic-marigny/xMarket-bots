@@ -21,6 +21,7 @@ import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { optionalEnv, positiveNumberEnv, withRetries } from "../shared/runtime";
 
 const FIFO_EPSILON = 1e-9;
 const DEFAULT_INITIAL_CASH = 1_000_000;
@@ -335,12 +336,14 @@ async function fetchLatestCloses(
   symbol: string,
   limitRows = 260,
 ): Promise<number[]> {
-  const { data, error } = await supabase
-    .from("stock_market_history")
-    .select("record_date, close_value")
-    .eq("symbol", symbol)
-    .order("record_date", { ascending: false })
-    .limit(limitRows);
+  const { data, error } = await withRetries(`ML Trend history ${symbol}`, async () =>
+    supabase
+      .from("stock_market_history")
+      .select("record_date, close_value")
+      .eq("symbol", symbol)
+      .order("record_date", { ascending: false })
+      .limit(limitRows),
+  );
 
   if (error) throw error;
   if (!data?.length) return [];
@@ -425,9 +428,8 @@ async function main() {
   const botEmail = requiredEnv("BOT_MLTREND_EMAIL");
   const botPassword = requiredEnv("BOT_MLTREND_PASSWORD");
 
-  const symbol = (process.env.BOT_MLTREND_SYMBOL ?? metadata.best_ticker ?? "ADBE").toUpperCase();
-  const lotSizeRaw = Number(process.env.BOT_MLTREND_QTY ?? "5");
-  const lotSize = Number.isFinite(lotSizeRaw) && lotSizeRaw > 0 ? lotSizeRaw : 5;
+  const symbol = (optionalEnv("BOT_MLTREND_SYMBOL") ?? metadata.best_ticker ?? "ADBE").toUpperCase();
+  const lotSize = positiveNumberEnv("BOT_MLTREND_QTY", 5);
 
   console.log(`[ML Trend Bot] Target symbol: ${symbol}, Lot size: ${lotSize}`);
 
