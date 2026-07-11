@@ -9,6 +9,7 @@ interface LiveMetrics {
   initialCredits: number;
   marketValue: number;
   lastTradeAt?: string;
+  resetAt?: string;
 }
 
 const DEFAULT_INITIAL_CREDITS = 1_000_000;
@@ -78,8 +79,6 @@ export function useLiveBotStats({
     }
     let cancelled = false;
 
-    const resetAtTs = resetAt ? Date.parse(resetAt) : 0;
-
     const fetchData = async () => {
       setLoading(true);
       setError(null);
@@ -98,20 +97,27 @@ export function useLiveBotStats({
         ]);
 
         const userData = userSnap.data() ?? {};
-        const hasReset = Number.isFinite(resetAtTs) && resetAtTs > 0;
+        const userResetAt = formatDate(userData?.resetAt) ?? undefined;
+        const localResetAtTs = resetAt ? Date.parse(resetAt) : 0;
+        const userResetAtTs = userResetAt ? Date.parse(userResetAt) : 0;
+        const effectiveResetAtTs = Math.max(
+          Number.isFinite(localResetAtTs) ? localResetAtTs : 0,
+          Number.isFinite(userResetAtTs) ? userResetAtTs : 0,
+        );
+        const effectiveResetAt = effectiveResetAtTs > 0 ? new Date(effectiveResetAtTs).toISOString() : undefined;
+        const hasReset = effectiveResetAtTs > 0;
         const initialCredits = hasReset
           ? DEFAULT_INITIAL_CREDITS
           : typeof userData.initialCredits === "number" && Number.isFinite(userData.initialCredits)
-          ? userData.initialCredits
-          : DEFAULT_INITIAL_CREDITS;
-        const cash = hasReset
-          ? initialCredits
-          : typeof userData.cash === "number" && Number.isFinite(userData.cash)
-          ? userData.cash
-          : initialCredits;
+            ? userData.initialCredits
+            : DEFAULT_INITIAL_CREDITS;
+        const cash =
+          typeof userData.cash === "number" && Number.isFinite(userData.cash)
+            ? userData.cash
+            : initialCredits;
 
         const normalizedOrders = normalizeOrders(ordersSnap.docs).filter(
-          (order) => !hasReset || order.ts >= resetAtTs,
+          (order) => !hasReset || order.ts >= effectiveResetAtTs,
         );
         const firstTradeAt =
           normalizedOrders.length > 0
@@ -131,7 +137,7 @@ export function useLiveBotStats({
           const updatedAt = formatDate(data?.updatedAt);
           if (hasReset && updatedAt) {
             const updatedAtTs = Date.parse(updatedAt);
-            if (Number.isFinite(updatedAtTs) && updatedAtTs < resetAtTs) continue;
+            if (Number.isFinite(updatedAtTs) && updatedAtTs < effectiveResetAtTs) continue;
           }
           const symbol = typeof data?.symbol === "string" && data.symbol.trim() ? data.symbol : position.id;
           if (!symbol) continue;
@@ -188,7 +194,7 @@ export function useLiveBotStats({
           status,
           openTrades,
           closedTrades,
-          liveMetrics: { cash: effectiveCash, initialCredits, marketValue, lastTradeAt },
+          liveMetrics: { cash: effectiveCash, initialCredits, marketValue, lastTradeAt, resetAt: effectiveResetAt },
           ...startDateOverride,
         };
 

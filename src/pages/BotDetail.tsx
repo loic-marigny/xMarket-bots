@@ -39,14 +39,15 @@ const BotDetail = () => {
       : id === "6"
       ? import.meta.env.VITE_BOT_MLTREND_UID
       : undefined;
-  const resetAt = baseBot ? getLatestManualResetAt(baseBot) : undefined;
+  const localResetAt = baseBot ? getLatestManualResetAt(baseBot) : undefined;
   const { data: liveOverride } = useLiveBotStats({
     botId: id ?? "",
     firestoreUid: currentUid,
-    resetAt,
+    resetAt: localResetAt,
     refreshMs: 5 * 60_000,
     maxOrders: 100,
   });
+  const effectiveResetAt = liveOverride?.liveMetrics?.resetAt ?? localResetAt;
   const bot = baseBot ? (liveOverride ? { ...baseBot, ...liveOverride } : baseBot) : undefined;
   const locale = i18n.language === "fr" ? fr : enUS;
   const localeCode = i18n.language === "fr" ? "fr-FR" : "en-US";
@@ -185,11 +186,22 @@ const BotDetail = () => {
 
   // Fallback to a known bot UID when the API doesn't return one yet.
   const fallbackUid = bot.firestoreUid ?? currentUid;
-  const { history: wealthHistory } = useWealthHistory(fallbackUid, getLatestManualResetAt(bot));
+  const { history: wealthHistory } = useWealthHistory(fallbackUid, effectiveResetAt);
 
-  // Use Firestore wealth history when available, otherwise default to mock points.
+  // When wealth history is empty right after a reset, seed the chart from live cash
+  // instead of falling back to stale mock points.
   const performanceData =
-    wealthHistory && wealthHistory.length ? wealthHistory : bot.performanceData;
+    wealthHistory && wealthHistory.length
+      ? wealthHistory
+      : bot.liveMetrics
+        ? [
+            {
+              date: effectiveResetAt ?? new Date().toISOString(),
+              liquidity: bot.liveMetrics.cash,
+              positionValue: bot.liveMetrics.marketValue,
+            },
+          ]
+        : bot.performanceData;
 
   return (
     <div className="min-h-screen bg-background">
