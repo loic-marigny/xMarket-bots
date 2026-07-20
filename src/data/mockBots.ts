@@ -20,7 +20,7 @@ import mlTrendCode from "@/bots/ml-trend/bot.py?raw";
 import mlTrendStrategy from "@/bots/ml-trend/strategy.md?raw";
 import mlTrendHistory from "@/bots/ml-trend/history.json";
 
-const BOT_UIDS: Record<string, string | undefined> = {
+export const BOT_UIDS: Record<string, string | undefined> = {
   "1": import.meta.env.VITE_BOT_MOMENTUM_UID,
   "2": import.meta.env.VITE_BOT_MEAN_UID,
   "3": import.meta.env.VITE_BOT_TREND_UID,

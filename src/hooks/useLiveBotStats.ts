@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { collection, doc, getDoc, getDocs, limit, orderBy, query, Timestamp, type QueryDocumentSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { supabaseClient } from "@/lib/supabaseClient";
@@ -56,6 +56,130 @@ export interface LiveBotStatsOptions {
   maxOrders?: number;
 }
 
+export async function fetchLiveBotStats({
+  botId,
+  firestoreUid,
+  resetAt,
+  maxOrders = 100,
+}: Pick<LiveBotStatsOptions, "botId" | "firestoreUid" | "resetAt" | "maxOrders">) {
+  if (!firestoreUid) return null;
+
+  const userRef = doc(db, "users", firestoreUid);
+  const ordersRef = query(
+    collection(db, "users", firestoreUid, "orders"),
+    orderBy("ts", "desc"),
+    limit(maxOrders),
+  );
+  const positionsRef = collection(db, "users", firestoreUid, "positions");
+  const [userSnap, ordersSnap, positionsSnap] = await Promise.all([
+    getDoc(userRef),
+    getDocs(ordersRef),
+    getDocs(positionsRef),
+  ]);
+
+  const userData = userSnap.data() ?? {};
+  const userResetAt = formatDate(userData?.resetAt) ?? undefined;
+  const localResetAtTs = resetAt ? Date.parse(resetAt) : 0;
+  const userResetAtTs = userResetAt ? Date.parse(userResetAt) : 0;
+  const effectiveResetAtTs = Math.max(
+    Number.isFinite(localResetAtTs) ? localResetAtTs : 0,
+    Number.isFinite(userResetAtTs) ? userResetAtTs : 0,
+  );
+  const effectiveResetAt = effectiveResetAtTs > 0 ? new Date(effectiveResetAtTs).toISOString() : undefined;
+  const hasReset = effectiveResetAtTs > 0;
+  const initialCredits = hasReset
+    ? DEFAULT_INITIAL_CREDITS
+    : typeof userData.initialCredits === "number" && Number.isFinite(userData.initialCredits)
+      ? userData.initialCredits
+      : DEFAULT_INITIAL_CREDITS;
+  const cash =
+    typeof userData.cash === "number" && Number.isFinite(userData.cash)
+      ? userData.cash
+      : initialCredits;
+
+  const normalizedOrders = normalizeOrders(ordersSnap.docs).filter(
+    (order) => !hasReset || order.ts >= effectiveResetAtTs,
+  );
+  const firstTradeAt =
+    normalizedOrders.length > 0
+      ? new Date(Math.min(...normalizedOrders.map((order) => order.ts))).toISOString()
+      : undefined;
+  const closedTrades = mapClosedTradeEntries(buildClosedTradeEntries(normalizedOrders));
+  const lastTradeAt =
+    normalizedOrders.length > 0
+      ? new Date(Math.max(...normalizedOrders.map((order) => order.ts))).toISOString()
+      : undefined;
+
+  const aggregatedPositions = aggregateOpenPositions(normalizedOrders);
+  const openTrades: Trade[] = [];
+  let marketValue = 0;
+  for (const position of positionsSnap.docs) {
+    const data = position.data() as any;
+    const updatedAt = formatDate(data?.updatedAt);
+    if (hasReset && updatedAt) {
+      const updatedAtTs = Date.parse(updatedAt);
+      if (Number.isFinite(updatedAtTs) && updatedAtTs < effectiveResetAtTs) continue;
+    }
+    const symbol = typeof data?.symbol === "string" && data.symbol.trim() ? data.symbol : position.id;
+    if (!symbol) continue;
+    const aggregated = aggregatedPositions.find((entry) => entry.symbol === symbol);
+    const qty = aggregated?.totalQty ?? sanitizeNumber(data?.qty) ?? 0;
+    if (!Number.isFinite(qty) || Math.abs(qty) <= STATS_EPSILON) continue;
+    const avgPrice = aggregated?.avgPrice ?? (Number(data?.avgPrice ?? data?.price ?? 0) || 0);
+    const currentPrice = await fetchLatestPrice(symbol);
+    const currentValue = currentPrice ? currentPrice * qty : 0;
+    marketValue += currentValue;
+    const pnl = currentPrice ? (currentPrice - avgPrice) * qty : 0;
+    const purchaseDate = formatDate(data?.updatedAt) ?? new Date().toISOString();
+    openTrades.push({
+      id: `${symbol}-open`,
+      company: symbol,
+      logo: `https://logo.clearbit.com/${symbol.toLowerCase()}.com`,
+      quantity: qty,
+      purchasePrice: avgPrice,
+      purchaseValue: avgPrice * qty,
+      currentPrice: currentPrice ?? undefined,
+      currentValue: currentPrice ? currentValue : undefined,
+      pnl,
+      purchaseDate,
+      lots: aggregated?.lots?.map((lot, index) => ({
+        qty: lot.qty,
+        price: lot.price,
+        purchaseDate: new Date(lot.ts).toISOString(),
+        id: `${symbol}-lot-${lot.ts}-${index}`,
+      })),
+    });
+  }
+
+  const effectiveCash = hasReset && normalizedOrders.length === 0 && openTrades.length === 0 ? initialCredits : cash;
+  const totalValue = effectiveCash + marketValue;
+  const stats = computeBotStats(initialCredits, totalValue, normalizedOrders);
+  const totalPnL = stats.pnl;
+  const roi = stats.roi * 100;
+  const trades = stats.tradesCount;
+  const winRate = stats.winRate * 100;
+  const status: Bot["status"] =
+    lastTradeAt && Date.now() - new Date(lastTradeAt).getTime() < 1000 * 60 * 60 * 24 * 3
+      ? "active"
+      : trades > 0
+        ? "paused"
+        : "stopped";
+
+  const startDateOverride = firstTradeAt ? { startDate: firstTradeAt } : {};
+  return {
+    id: botId,
+    roi,
+    totalPnL,
+    trades,
+    winRate,
+    status,
+    openTrades,
+    closedTrades,
+    liveMetrics: { cash: effectiveCash, initialCredits, marketValue, lastTradeAt, resetAt: effectiveResetAt },
+    ...startDateOverride,
+  } satisfies Partial<Bot> & { liveMetrics: LiveMetrics };
+}
+
 /**
  * Subscribes to Firestore collections that contain live bot activity.
  * Returns an override payload that mirrors the `Bot` shape so mock data can
@@ -83,120 +207,7 @@ export function useLiveBotStats({
       setLoading(true);
       setError(null);
       try {
-        const userRef = doc(db, "users", firestoreUid);
-        const ordersRef = query(
-          collection(db, "users", firestoreUid, "orders"),
-          orderBy("ts", "desc"),
-          limit(maxOrders),
-        );
-        const positionsRef = collection(db, "users", firestoreUid, "positions");
-        const [userSnap, ordersSnap, positionsSnap] = await Promise.all([
-          getDoc(userRef),
-          getDocs(ordersRef),
-          getDocs(positionsRef),
-        ]);
-
-        const userData = userSnap.data() ?? {};
-        const userResetAt = formatDate(userData?.resetAt) ?? undefined;
-        const localResetAtTs = resetAt ? Date.parse(resetAt) : 0;
-        const userResetAtTs = userResetAt ? Date.parse(userResetAt) : 0;
-        const effectiveResetAtTs = Math.max(
-          Number.isFinite(localResetAtTs) ? localResetAtTs : 0,
-          Number.isFinite(userResetAtTs) ? userResetAtTs : 0,
-        );
-        const effectiveResetAt = effectiveResetAtTs > 0 ? new Date(effectiveResetAtTs).toISOString() : undefined;
-        const hasReset = effectiveResetAtTs > 0;
-        const initialCredits = hasReset
-          ? DEFAULT_INITIAL_CREDITS
-          : typeof userData.initialCredits === "number" && Number.isFinite(userData.initialCredits)
-            ? userData.initialCredits
-            : DEFAULT_INITIAL_CREDITS;
-        const cash =
-          typeof userData.cash === "number" && Number.isFinite(userData.cash)
-            ? userData.cash
-            : initialCredits;
-
-        const normalizedOrders = normalizeOrders(ordersSnap.docs).filter(
-          (order) => !hasReset || order.ts >= effectiveResetAtTs,
-        );
-        const firstTradeAt =
-          normalizedOrders.length > 0
-            ? new Date(Math.min(...normalizedOrders.map((order) => order.ts))).toISOString()
-            : undefined;
-        const closedTrades = mapClosedTradeEntries(buildClosedTradeEntries(normalizedOrders));
-        const lastTradeAt =
-          normalizedOrders.length > 0
-            ? new Date(Math.max(...normalizedOrders.map((order) => order.ts))).toISOString()
-            : undefined;
-
-        const aggregatedPositions = aggregateOpenPositions(normalizedOrders);
-        const openTrades: Trade[] = [];
-        let marketValue = 0;
-        for (const position of positionsSnap.docs) {
-          const data = position.data() as any;
-          const updatedAt = formatDate(data?.updatedAt);
-          if (hasReset && updatedAt) {
-            const updatedAtTs = Date.parse(updatedAt);
-            if (Number.isFinite(updatedAtTs) && updatedAtTs < effectiveResetAtTs) continue;
-          }
-          const symbol = typeof data?.symbol === "string" && data.symbol.trim() ? data.symbol : position.id;
-          if (!symbol) continue;
-          const aggregated = aggregatedPositions.find((entry) => entry.symbol === symbol);
-          const qty = aggregated?.totalQty ?? sanitizeNumber(data?.qty) ?? 0;
-          if (!Number.isFinite(qty) || Math.abs(qty) <= STATS_EPSILON) continue;
-          const avgPrice = aggregated?.avgPrice ?? (Number(data?.avgPrice ?? data?.price ?? 0) || 0);
-          const currentPrice = await fetchLatestPrice(symbol);
-          const currentValue = currentPrice ? currentPrice * qty : 0;
-          marketValue += currentValue;
-          const pnl = currentPrice ? (currentPrice - avgPrice) * qty : 0;
-          const purchaseDate = formatDate(data?.updatedAt) ?? new Date().toISOString();
-          openTrades.push({
-            id: `${symbol}-open`,
-            company: symbol,
-            logo: `https://logo.clearbit.com/${symbol.toLowerCase()}.com`,
-            quantity: qty,
-            purchasePrice: avgPrice,
-            purchaseValue: avgPrice * qty,
-            currentPrice: currentPrice ?? undefined,
-            currentValue: currentPrice ? currentValue : undefined,
-            pnl,
-            purchaseDate,
-            lots: aggregated?.lots?.map((lot, index) => ({
-              qty: lot.qty,
-              price: lot.price,
-              purchaseDate: new Date(lot.ts).toISOString(),
-              id: `${symbol}-lot-${lot.ts}-${index}`,
-            })),
-          });
-        }
-
-        const effectiveCash = hasReset && normalizedOrders.length === 0 && openTrades.length === 0 ? initialCredits : cash;
-        const totalValue = effectiveCash + marketValue;
-        const stats = computeBotStats(initialCredits, totalValue, normalizedOrders);
-        const totalPnL = stats.pnl;
-        const roi = stats.roi * 100;
-        const trades = stats.tradesCount;
-        const winRate = stats.winRate * 100;
-        const status: Bot["status"] =
-          lastTradeAt && Date.now() - new Date(lastTradeAt).getTime() < 1000 * 60 * 60 * 24 * 3
-            ? "active"
-            : trades > 0
-            ? "paused"
-            : "stopped";
-
-        const startDateOverride = firstTradeAt ? { startDate: firstTradeAt } : {};
-        const overrides: Partial<Bot> & { liveMetrics: LiveMetrics } = {
-          id: botId,
-          roi,
-          totalPnL,
-          trades,
-          winRate,
-          status,
-          openTrades,
-          closedTrades,
-          liveMetrics: { cash: effectiveCash, initialCredits, marketValue, lastTradeAt, resetAt: effectiveResetAt },
-          ...startDateOverride,
-        };
+        const overrides = await fetchLiveBotStats({ botId, firestoreUid, resetAt, maxOrders });
 
         if (!cancelled) {
           setOverride(overrides);

@@ -1,28 +1,19 @@
-import { mockBots } from "@/data/mockBots";
 import type { Bot } from "@/types/bot";
 import { BotCard } from "@/components/BotCard";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { Activity } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { deriveBotLifecycleState, getLatestManualResetAt } from "@/lib/botLifecycle";
+import { deriveBotLifecycleState } from "@/lib/botLifecycle";
+import { useDashboardBots } from "@/hooks/useDashboardBots";
 
 /**
  * Home dashboard that surfaces aggregate stats and the list of bots.
- * It merges mock definitions with any live overrides fetched from Firestore.
+ * It merges the static catalog with the same live overrides used in detail pages.
  */
 const Index = () => {
   const { t } = useTranslation();
-  // Keep the dashboard on the lightweight local dataset.
-  // Live Firestore reads are reserved for the bot detail page.
-  const bots = useMemo(
-    () =>
-      mockBots.map((bot) => ({
-        ...bot,
-        startDate: getLatestManualResetAt(bot) ?? bot.startDate,
-      })),
-    [],
-  );
+  const bots = useDashboardBots();
 
   const lifecycleStates = useMemo(() => bots.map((bot) => deriveBotLifecycleState(bot)), [bots]);
   // Dashboard KPIs used in the hero stat cards.
@@ -64,7 +55,7 @@ const Index = () => {
 
           <div className="bg-card border border-border rounded-lg p-6">
             <div className="text-sm text-muted-foreground mb-2">{t('dashboard.activeBots')}</div>
-            <div className="text-3xl font-bold text-primary">{activeBots}/{mockBots.length}</div>
+            <div className="text-3xl font-bold text-primary">{activeBots}/{bots.length}</div>
           </div>
 
           <div className="bg-card border border-border rounded-lg p-6">
