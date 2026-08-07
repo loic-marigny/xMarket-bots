@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-08-06T05:20:34.890859",
+  "generated_at": "2026-08-07T04:28:01.461225",
   "best_ticker": "NFLX",
-  "accuracy": 0.5888888888888889,
+  "accuracy": 0.5824175824175825,
   "feature_names": [
     "zscore",
     "pct_change",
@@ -34,39 +34,39 @@
   "per_ticker_accuracy": [
     {
       "ticker": "AAPL",
-      "accuracy": 0.4777777777777778
+      "accuracy": 0.4835164835164835
     },
     {
       "ticker": "MSFT",
-      "accuracy": 0.4777777777777778
+      "accuracy": 0.4835164835164835
     },
     {
       "ticker": "AMZN",
-      "accuracy": 0.5555555555555556
+      "accuracy": 0.5494505494505495
     },
     {
       "ticker": "META",
-      "accuracy": 0.4666666666666667
+      "accuracy": 0.4725274725274725
     },
     {
       "ticker": "NVDA",
-      "accuracy": 0.4666666666666667
+      "accuracy": 0.4725274725274725
     },
     {
       "ticker": "GOOGL",
-      "accuracy": 0.4444444444444444
+      "accuracy": 0.45054945054945056
     },
     {
       "ticker": "TSLA",
-      "accuracy": 0.4666666666666667
+      "accuracy": 0.4725274725274725
     },
     {
       "ticker": "NFLX",
-      "accuracy": 0.5888888888888889
+      "accuracy": 0.5824175824175825
     },
     {
       "ticker": "ADBE",
-      "accuracy": 0.5111111111111111
+      "accuracy": 0.5054945054945055
     }
   ]
 }
