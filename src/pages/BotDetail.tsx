@@ -51,6 +51,7 @@ const BotDetail = () => {
   const bot = baseBot ? (liveOverride ? { ...baseBot, ...liveOverride } : baseBot) : undefined;
   const locale = i18n.language === "fr" ? fr : enUS;
   const localeCode = i18n.language === "fr" ? "fr-FR" : "en-US";
+  const totalAssetsValue = bot?.liveMetrics ? bot.liveMetrics.cash + bot.liveMetrics.marketValue : null;
   const [expandedOpenTrade, setExpandedOpenTrade] = useState<string | null>(null);
   const [expandedLotGroups, setExpandedLotGroups] = useState<Record<string, boolean>>({});
   const [closedSortKey, setClosedSortKey] = useState<keyof Trade | null>(null);
@@ -188,8 +189,9 @@ const BotDetail = () => {
   const fallbackUid = bot.firestoreUid ?? currentUid;
   const { history: wealthHistory } = useWealthHistory(fallbackUid, effectiveResetAt);
 
-  // When wealth history is empty right after a reset, seed the chart from live cash
-  // instead of falling back to stale mock points.
+  // Prefer the persisted wealth history for the chart because it is the
+  // authoritative time series. Only seed from live metrics when no history
+  // exists yet (for example right after a reset).
   const performanceData =
     wealthHistory && wealthHistory.length
       ? wealthHistory
@@ -279,7 +281,7 @@ const BotDetail = () => {
       {bot.liveMetrics && (
         <Card className="p-6 mb-8">
           <h2 className="text-2xl font-bold mb-4">{t('botDetail.liveMetrics.title')}</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <div className="text-sm text-muted-foreground">{t('botDetail.liveMetrics.cash')}</div>
               <p className="text-2xl font-semibold">{formatMoney(bot.liveMetrics.cash)}</p>
@@ -287,6 +289,10 @@ const BotDetail = () => {
             <div>
               <div className="text-sm text-muted-foreground">{t('botDetail.liveMetrics.marketValue')}</div>
               <p className="text-2xl font-semibold">{formatMoney(bot.liveMetrics.marketValue)}</p>
+            </div>
+            <div>
+              <div className="text-sm text-muted-foreground">{t('botDetail.liveMetrics.totalAssets')}</div>
+              <p className="text-2xl font-semibold">{formatMoney(totalAssetsValue ?? 0)}</p>
             </div>
             <div>
               <div className="text-sm text-muted-foreground">{t('botDetail.liveMetrics.lastTrade')}</div>

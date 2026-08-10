@@ -36,6 +36,7 @@
       "title": "Statistiques en direct",
       "cash": "Trésorerie",
       "marketValue": "Valeur des positions",
+      "totalAssets": "Valeur totale des actifs",
       "lastTrade": "Dernier trade",
       "never": "Jamais"
     },

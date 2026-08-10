@@ -36,6 +36,7 @@
       "title": "Live metrics",
       "cash": "Cash",
       "marketValue": "Positions value",
+      "totalAssets": "Total assets value",
       "lastTrade": "Last trade",
       "never": "Never"
     },

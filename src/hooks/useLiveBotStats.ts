@@ -71,10 +71,16 @@ export async function fetchLiveBotStats({
     limit(maxOrders),
   );
   const positionsRef = collection(db, "users", firestoreUid, "positions");
-  const [userSnap, ordersSnap, positionsSnap] = await Promise.all([
+  const latestWealthRef = query(
+    collection(db, "users", firestoreUid, "wealthHistory"),
+    orderBy("ts", "desc"),
+    limit(1),
+  );
+  const [userSnap, ordersSnap, positionsSnap, latestWealthSnap] = await Promise.all([
     getDoc(userRef),
     getDocs(ordersRef),
     getDocs(positionsRef),
+    getDocs(latestWealthRef),
   ]);
 
   const userData = userSnap.data() ?? {};
@@ -100,6 +106,8 @@ export async function fetchLiveBotStats({
   const normalizedOrders = normalizeOrders(ordersSnap.docs).filter(
     (order) => !hasReset || order.ts >= effectiveResetAtTs,
   );
+  const latestWealthData = latestWealthSnap.docs[0]?.data() as Record<string, unknown> | undefined;
+  const fallbackMarketValue = sanitizeNumber(latestWealthData?.stocks);
   const firstTradeAt =
     normalizedOrders.length > 0
       ? new Date(Math.min(...normalizedOrders.map((order) => order.ts))).toISOString()
@@ -113,6 +121,7 @@ export async function fetchLiveBotStats({
   const aggregatedPositions = aggregateOpenPositions(normalizedOrders);
   const openTrades: Trade[] = [];
   let marketValue = 0;
+  let unresolvedPositions = 0;
   for (const position of positionsSnap.docs) {
     const data = position.data() as any;
     const updatedAt = formatDate(data?.updatedAt);
@@ -127,9 +136,12 @@ export async function fetchLiveBotStats({
     if (!Number.isFinite(qty) || Math.abs(qty) <= STATS_EPSILON) continue;
     const avgPrice = aggregated?.avgPrice ?? (Number(data?.avgPrice ?? data?.price ?? 0) || 0);
     const currentPrice = await fetchLatestPrice(symbol);
-    const currentValue = currentPrice ? currentPrice * qty : 0;
+    const currentValue = typeof currentPrice === "number" ? currentPrice * qty : 0;
+    if (typeof currentPrice !== "number") {
+      unresolvedPositions += 1;
+    }
     marketValue += currentValue;
-    const pnl = currentPrice ? (currentPrice - avgPrice) * qty : 0;
+    const pnl = typeof currentPrice === "number" ? (currentPrice - avgPrice) * qty : 0;
     const purchaseDate = formatDate(data?.updatedAt) ?? new Date().toISOString();
     openTrades.push({
       id: `${symbol}-open`,
@@ -151,8 +163,12 @@ export async function fetchLiveBotStats({
     });
   }
 
+  const effectiveMarketValue =
+    unresolvedPositions > 0 && typeof fallbackMarketValue === "number"
+      ? fallbackMarketValue
+      : marketValue;
   const effectiveCash = hasReset && normalizedOrders.length === 0 && openTrades.length === 0 ? initialCredits : cash;
-  const totalValue = effectiveCash + marketValue;
+  const totalValue = effectiveCash + effectiveMarketValue;
   const stats = computeBotStats(initialCredits, totalValue, normalizedOrders);
   const totalPnL = stats.pnl;
   const roi = stats.roi * 100;
@@ -175,7 +191,13 @@ export async function fetchLiveBotStats({
     status,
     openTrades,
     closedTrades,
-    liveMetrics: { cash: effectiveCash, initialCredits, marketValue, lastTradeAt, resetAt: effectiveResetAt },
+    liveMetrics: {
+      cash: effectiveCash,
+      initialCredits,
+      marketValue: effectiveMarketValue,
+      lastTradeAt,
+      resetAt: effectiveResetAt,
+    },
     ...startDateOverride,
   } satisfies Partial<Bot> & { liveMetrics: LiveMetrics };
 }
