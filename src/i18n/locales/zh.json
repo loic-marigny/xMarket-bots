@@ -1,0 +1,74 @@
+{
+  "dashboard": {
+    "title": "交易机器人仪表盘",
+    "subtitle": "监控并管理你的算法交易机器人",
+    "totalPnl": "总盈亏",
+    "avgRoi": "平均投资回报率",
+    "activeBots": "活跃机器人",
+    "totalTrades": "总交易数",
+    "myBots": "我的机器人"
+  },
+  "botCard": {
+    "roi": "投资回报率",
+    "pnl": "盈亏",
+    "winRate": "胜率",
+    "trades": "交易",
+    "runningSince": "运行自",
+    "viewDetails": "查看详情"
+  },
+  "botDetail": {
+    "back": "返回",
+    "strategy": "策略",
+    "code": "代码",
+    "performance": "表现",
+    "roi": "投资回报率",
+    "pnl": "盈亏",
+    "winRate": "胜率",
+    "trades": "交易",
+    "runningSince": "运行自",
+    "lastPause": "上次暂停",
+    "status": {
+      "active": "运行中",
+      "paused": "已暂停",
+      "stopped": "已停止"
+    },
+    "liveMetrics": {
+      "title": "实时统计",
+      "cash": "现金",
+      "marketValue": "持仓价值",
+      "totalAssets": "总资产价值",
+      "lastTrade": "最近一次交易",
+      "never": "从未"
+    },
+    "chart": {
+      "liquidity": "流动资金",
+      "positionValue": "持仓价值",
+      "total": "总计"
+    },
+    "notFound": {
+      "title": "未找到机器人",
+      "cta": "返回仪表盘"
+    },
+    "openTrades": "未平仓持仓",
+    "openTradesEmpty": "暂无未平仓持仓。",
+    "closedTrades": "已平仓交易",
+    "closedTradesEmpty": "暂无已平仓交易。",
+    "table": {
+      "company": "公司",
+      "quantity": "数量",
+      "purchasePrice": "买入价",
+      "purchaseValue": "买入金额",
+      "purchaseDate": "买入日期",
+      "currentPrice": "当前价格",
+      "currentValue": "当前价值",
+      "sellPrice": "卖出价",
+      "sellValue": "卖出金额",
+      "sellDate": "卖出日期",
+      "pnl": "盈亏",
+      "lotBreakdown": "分批明细",
+      "expand": "展开行",
+      "collapse": "收起行",
+      "sortedBy": "排序依据"
+    }
+  }
+}

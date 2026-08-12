@@ -1,0 +1,74 @@
+{
+  "dashboard": {
+    "title": "Панель торговых ботов",
+    "subtitle": "Отслеживайте и управляйте своими алгоритмическими торговыми ботами",
+    "totalPnl": "Общий P&L",
+    "avgRoi": "Средний ROI",
+    "activeBots": "Активные боты",
+    "totalTrades": "Всего сделок",
+    "myBots": "Мои боты"
+  },
+  "botCard": {
+    "roi": "ROI",
+    "pnl": "P&L",
+    "winRate": "Процент успешных сделок",
+    "trades": "Сделки",
+    "runningSince": "С",
+    "viewDetails": "Подробнее"
+  },
+  "botDetail": {
+    "back": "Назад",
+    "strategy": "Стратегия",
+    "code": "Код",
+    "performance": "Результаты",
+    "roi": "ROI",
+    "pnl": "P&L",
+    "winRate": "Процент успешных сделок",
+    "trades": "Сделки",
+    "runningSince": "С",
+    "lastPause": "Последняя пауза",
+    "status": {
+      "active": "Активен",
+      "paused": "На паузе",
+      "stopped": "Остановлен"
+    },
+    "liveMetrics": {
+      "title": "Показатели в реальном времени",
+      "cash": "Денежные средства",
+      "marketValue": "Стоимость позиций",
+      "totalAssets": "Общая стоимость активов",
+      "lastTrade": "Последняя сделка",
+      "never": "Никогда"
+    },
+    "chart": {
+      "liquidity": "Ликвидность",
+      "positionValue": "Стоимость позиции",
+      "total": "Итого"
+    },
+    "notFound": {
+      "title": "Бот не найден",
+      "cta": "Вернуться к панели"
+    },
+    "openTrades": "Открытые позиции",
+    "openTradesEmpty": "Открытых позиций пока нет.",
+    "closedTrades": "Закрытые сделки",
+    "closedTradesEmpty": "Закрытых сделок пока нет.",
+    "table": {
+      "company": "Компания",
+      "quantity": "Количество",
+      "purchasePrice": "Цена покупки",
+      "purchaseValue": "Стоимость покупки",
+      "purchaseDate": "Дата покупки",
+      "currentPrice": "Текущая цена",
+      "currentValue": "Текущая стоимость",
+      "sellPrice": "Цена продажи",
+      "sellValue": "Стоимость продажи",
+      "sellDate": "Дата продажи",
+      "pnl": "P&L",
+      "lotBreakdown": "Разбивка по лотам",
+      "expand": "Развернуть строку",
+      "collapse": "Свернуть строку",
+      "sortedBy": "Сортировка по"
+    }
+  }
+}

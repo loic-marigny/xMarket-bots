@@ -132,9 +132,12 @@ export async function fetchLiveBotStats({
     const symbol = typeof data?.symbol === "string" && data.symbol.trim() ? data.symbol : position.id;
     if (!symbol) continue;
     const aggregated = aggregatedPositions.find((entry) => entry.symbol === symbol);
-    const qty = aggregated?.totalQty ?? sanitizeNumber(data?.qty) ?? 0;
+    const persistedQty = sanitizeNumber(data?.qty);
+    const qty = persistedQty ?? aggregated?.totalQty ?? 0;
     if (!Number.isFinite(qty) || Math.abs(qty) <= STATS_EPSILON) continue;
-    const avgPrice = aggregated?.avgPrice ?? (Number(data?.avgPrice ?? data?.price ?? 0) || 0);
+    const persistedAvgPrice = sanitizeNumber(data?.avgPrice) ?? sanitizeNumber(data?.price);
+    const avgPrice = persistedAvgPrice ?? aggregated?.avgPrice ?? 0;
+    const persistedLots = Array.isArray(data?.lots) ? data.lots : undefined;
     const currentPrice = await fetchLatestPrice(symbol);
     const currentValue = typeof currentPrice === "number" ? currentPrice * qty : 0;
     if (typeof currentPrice !== "number") {
@@ -154,11 +157,13 @@ export async function fetchLiveBotStats({
       currentValue: currentPrice ? currentValue : undefined,
       pnl,
       purchaseDate,
-      lots: aggregated?.lots?.map((lot, index) => ({
-        qty: lot.qty,
-        price: lot.price,
-        purchaseDate: new Date(lot.ts).toISOString(),
-        id: `${symbol}-lot-${lot.ts}-${index}`,
+      lots: (persistedLots ?? aggregated?.lots)?.map((lot: any, index: number) => ({
+        qty: sanitizeNumber(lot?.qty) ?? 0,
+        price: sanitizeNumber(lot?.price) ?? 0,
+        purchaseDate: new Date(
+          typeof lot?.ts === "number" && Number.isFinite(lot.ts) ? lot.ts : Date.now(),
+        ).toISOString(),
+        id: `${symbol}-lot-${typeof lot?.ts === "number" ? lot.ts : "unknown"}-${index}`,
       })),
     });
   }

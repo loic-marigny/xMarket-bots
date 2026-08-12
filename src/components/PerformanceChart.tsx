@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { PerformancePoint } from "@/types/bot";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { useTranslation } from "react-i18next";
+import { getIntlLocale } from "@/i18n/settings";
 
 interface PerformanceChartProps {
   data: PerformancePoint[];
@@ -12,7 +13,7 @@ interface PerformanceChartProps {
  */
 export const PerformanceChart = ({ data }: PerformanceChartProps) => {
   const { t, i18n } = useTranslation();
-  const locale = i18n.language === "fr" ? "fr-FR" : "en-US";
+  const locale = getIntlLocale(i18n.language);
   const dateFormatter = useMemo(
     () =>
       new Intl.DateTimeFormat(locale, {

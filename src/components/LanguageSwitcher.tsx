@@ -1,28 +1,46 @@
-import { useTranslation } from 'react-i18next';
-import { Button } from './ui/button';
-import { Languages } from 'lucide-react';
+import { useTranslation } from "react-i18next";
+import { Languages } from "lucide-react";
+import {
+  languageNames,
+  languageStorageKey,
+  resolveLanguage,
+  supportedLanguages,
+} from "@/i18n/settings";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 
 /**
- * Toggles i18next between English and French and persists the preference.
+ * Selects the active UI language from the configured language list.
  */
 export const LanguageSwitcher = () => {
   const { i18n } = useTranslation();
+  const currentLanguage = resolveLanguage(i18n.language);
 
-  const toggleLanguage = () => {
-    const newLang = i18n.language === 'fr' ? 'en' : 'fr';
+  const handleLanguageChange = (newLang: string) => {
     i18n.changeLanguage(newLang);
-    localStorage.setItem('language', newLang);
+    localStorage.setItem(languageStorageKey, newLang);
   };
 
   return (
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={toggleLanguage}
-      className="gap-2"
-    >
-      <Languages className="w-4 h-4" />
-      {i18n.language === 'fr' ? 'EN' : 'FR'}
-    </Button>
+    <Select value={currentLanguage} onValueChange={handleLanguageChange}>
+      <SelectTrigger className="w-[190px] gap-2">
+        <div className="flex items-center gap-2">
+          <Languages className="h-4 w-4" />
+          <SelectValue>{languageNames[currentLanguage]}</SelectValue>
+        </div>
+      </SelectTrigger>
+      <SelectContent>
+        {supportedLanguages.map((language) => (
+          <SelectItem key={language} value={language}>
+            {languageNames[language]}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 };

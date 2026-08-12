@@ -19,12 +19,12 @@ export const Markdown = ({ className, ...props }: MarkdownProps) => (
       ul: ({ node, ordered, ...rest }) => {
         const props = { ...rest };
         delete (props as Record<string, unknown>).ordered;
-        return <ul className="list-disc pl-5 space-y-1 text-muted-foreground mb-3" {...props} />;
+        return <ul className="markdown-list list-disc space-y-1 text-muted-foreground mb-3" {...props} />;
       },
       ol: ({ node, ordered, ...rest }) => {
         const props = { ...rest };
         delete (props as Record<string, unknown>).ordered;
-        return <ol className="list-decimal pl-5 space-y-1 text-muted-foreground mb-3" {...props} />;
+        return <ol className="markdown-list list-decimal space-y-1 text-muted-foreground mb-3" {...props} />;
       },
       li: ({ node, ordered, ...rest }) => {
         const props = { ...rest };

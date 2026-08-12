@@ -10,7 +10,6 @@ import { PerformanceChart } from "@/components/PerformanceChart";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
-import { fr, enUS } from "date-fns/locale";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useWealthHistory } from "@/hooks/useWealthHistory";
 import { useLiveBotStats } from "@/hooks/useLiveBotStats";
@@ -18,6 +17,8 @@ import { deriveBotLifecycleState, getLatestManualResetAt } from "@/lib/botLifecy
 import { Markdown } from "@/components/Markdown";
 import { StockLogo } from "@/components/StockLogo";
 import { cn } from "@/lib/utils";
+import { getDateFnsLocale, getIntlLocale, isRtlLanguage } from "@/i18n/settings";
+import { getBotStrategy } from "@/bots/strategies";
 
 /**
  * Detailed view for a single bot. It merges mock data with any live override,
@@ -49,8 +50,10 @@ const BotDetail = () => {
   });
   const effectiveResetAt = liveOverride?.liveMetrics?.resetAt ?? localResetAt;
   const bot = baseBot ? (liveOverride ? { ...baseBot, ...liveOverride } : baseBot) : undefined;
-  const locale = i18n.language === "fr" ? fr : enUS;
-  const localeCode = i18n.language === "fr" ? "fr-FR" : "en-US";
+  const locale = getDateFnsLocale(i18n.language);
+  const localeCode = getIntlLocale(i18n.language);
+  const isRtl = isRtlLanguage(i18n.language);
+  const localizedStrategy = bot ? getBotStrategy(bot.id, i18n.language) : "";
   const totalAssetsValue = bot?.liveMetrics ? bot.liveMetrics.cash + bot.liveMetrics.marketValue : null;
   const [expandedOpenTrade, setExpandedOpenTrade] = useState<string | null>(null);
   const [expandedLotGroups, setExpandedLotGroups] = useState<Record<string, boolean>>({});
@@ -209,8 +212,8 @@ const BotDetail = () => {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <Link to="/">
-          <Button variant="ghost" className="mb-6">
-            <ArrowLeft className="w-4 h-4 mr-2" />
+          <Button variant="ghost" className="mb-6 gap-2">
+            <ArrowLeft className={cn("w-4 h-4", isRtl && "rotate-180")} />
             {t('botDetail.back')}
           </Button>
         </Link>
@@ -312,12 +315,16 @@ const BotDetail = () => {
         <div className="grid grid-cols-1 lg:grid-cols-[35%_auto] gap-8 mb-8 items-stretch">
           <Card className="p-6 order-2 lg:order-1 flex flex-col">
             <h2 className="text-2xl font-bold mb-4">{t('botDetail.strategy')}</h2>
-            <Markdown className="space-y-3 text-sm text-foreground flex-1">{bot.strategy}</Markdown>
+            <Markdown className="space-y-3 text-sm text-foreground flex-1">{localizedStrategy || bot.strategy}</Markdown>
           </Card>
 
           <Card className="p-6 order-1 lg:order-2">
             <h2 className="text-2xl font-bold mb-4">{t('botDetail.code')}</h2>
-            <pre className="bg-secondary p-4 rounded-lg overflow-x-auto text-sm max-w-full" style={{ maxWidth: "100%" }}>
+            <pre
+              dir="ltr"
+              className="bg-secondary p-4 rounded-lg overflow-x-auto text-sm max-w-full text-left"
+              style={{ maxWidth: "100%" }}
+            >
               <code className="text-foreground block whitespace-pre-wrap break-words">{bot.code}</code>
             </pre>
           </Card>

@@ -1,0 +1,74 @@
+{
+  "dashboard": {
+    "title": "لوحة تحكم روبوتات التداول",
+    "subtitle": "راقب وأدر روبوتات التداول الخوارزمية الخاصة بك",
+    "totalPnl": "إجمالي الربح والخسارة",
+    "avgRoi": "متوسط العائد على الاستثمار",
+    "activeBots": "الروبوتات النشطة",
+    "totalTrades": "إجمالي الصفقات",
+    "myBots": "روبوتاتي"
+  },
+  "botCard": {
+    "roi": "العائد على الاستثمار",
+    "pnl": "الربح والخسارة",
+    "winRate": "نسبة النجاح",
+    "trades": "الصفقات",
+    "runningSince": "منذ",
+    "viewDetails": "عرض التفاصيل"
+  },
+  "botDetail": {
+    "back": "رجوع",
+    "strategy": "الاستراتيجية",
+    "code": "الكود",
+    "performance": "الأداء",
+    "roi": "العائد على الاستثمار",
+    "pnl": "الربح والخسارة",
+    "winRate": "نسبة النجاح",
+    "trades": "الصفقات",
+    "runningSince": "منذ",
+    "lastPause": "آخر إيقاف مؤقت",
+    "status": {
+      "active": "نشط",
+      "paused": "متوقف مؤقتًا",
+      "stopped": "متوقف"
+    },
+    "liveMetrics": {
+      "title": "إحصاءات مباشرة",
+      "cash": "السيولة النقدية",
+      "marketValue": "قيمة المراكز",
+      "totalAssets": "إجمالي قيمة الأصول",
+      "lastTrade": "آخر صفقة",
+      "never": "أبدًا"
+    },
+    "chart": {
+      "liquidity": "السيولة",
+      "positionValue": "قيمة المركز",
+      "total": "الإجمالي"
+    },
+    "notFound": {
+      "title": "الروبوت غير موجود",
+      "cta": "العودة إلى لوحة التحكم"
+    },
+    "openTrades": "المراكز المفتوحة",
+    "openTradesEmpty": "لا توجد مراكز مفتوحة بعد.",
+    "closedTrades": "الصفقات المغلقة",
+    "closedTradesEmpty": "لم يتم إغلاق أي صفقات بعد.",
+    "table": {
+      "company": "الشركة",
+      "quantity": "الكمية",
+      "purchasePrice": "سعر الشراء",
+      "purchaseValue": "قيمة الشراء",
+      "purchaseDate": "تاريخ الشراء",
+      "currentPrice": "السعر الحالي",
+      "currentValue": "القيمة الحالية",
+      "sellPrice": "سعر البيع",
+      "sellValue": "قيمة البيع",
+      "sellDate": "تاريخ البيع",
+      "pnl": "الربح والخسارة",
+      "lotBreakdown": "تفصيل اللوتات",
+      "expand": "توسيع الصف",
+      "collapse": "طي الصف",
+      "sortedBy": "الترتيب حسب"
+    }
+  }
+}

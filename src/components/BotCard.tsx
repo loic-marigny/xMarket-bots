@@ -5,8 +5,8 @@ import { ArrowUpRight, ArrowDownRight, TrendingUp, Activity, Calendar } from "lu
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
-import { fr, enUS } from "date-fns/locale";
 import { deriveBotLifecycleState } from "@/lib/botLifecycle";
+import { getDateFnsLocale, getIntlLocale } from "@/i18n/settings";
 
 interface BotCardProps {
   bot: Bot;
@@ -19,10 +19,12 @@ interface BotCardProps {
 export const BotCard = ({ bot }: BotCardProps) => {
   const { t, i18n } = useTranslation();
   const isPositive = bot.roi >= 0;
-  const locale = i18n.language === 'fr' ? fr : enUS;
+  const locale = getDateFnsLocale(i18n.language);
+  const localeCode = getIntlLocale(i18n.language);
   const lifecycle = deriveBotLifecycleState(bot);
   const runningSince = lifecycle.firstActivatedAt ?? bot.startDate;
   const formattedDate = format(new Date(runningSince), 'PP', { locale });
+  const numberFormatter = new Intl.NumberFormat(localeCode);
   
   const statusColors = {
     active: "bg-success/20 text-success border-success/30",
@@ -76,7 +78,7 @@ export const BotCard = ({ bot }: BotCardProps) => {
               <span>{t('botCard.pnl')}</span>
             </div>
             <p className={`text-2xl font-bold ${bot.totalPnL >= 0 ? "text-success" : "text-destructive"}`}>
-              {bot.totalPnL >= 0 ? "+" : ""}${bot.totalPnL.toLocaleString()}
+              {bot.totalPnL >= 0 ? "+" : ""}${numberFormatter.format(bot.totalPnL)}
             </p>
           </div>
 
@@ -90,7 +92,7 @@ export const BotCard = ({ bot }: BotCardProps) => {
 
           <div className="space-y-1">
             <div className="text-sm text-muted-foreground">{t('botCard.trades')}</div>
-            <p className="text-xl font-semibold">{bot.trades.toLocaleString()}</p>
+            <p className="text-xl font-semibold">{numberFormatter.format(bot.trades)}</p>
           </div>
         </div>
       </Card>
