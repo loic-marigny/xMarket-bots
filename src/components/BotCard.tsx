@@ -25,6 +25,7 @@ export const BotCard = ({ bot }: BotCardProps) => {
   const runningSince = lifecycle.firstActivatedAt ?? bot.startDate;
   const formattedDate = format(new Date(runningSince), 'PP', { locale });
   const numberFormatter = new Intl.NumberFormat(localeCode);
+  const translatedDescription = t(`botDescriptions.${bot.id}`, { defaultValue: bot.description });
   
   const statusColors = {
     active: "bg-success/20 text-success border-success/30",
@@ -46,7 +47,7 @@ export const BotCard = ({ bot }: BotCardProps) => {
             <h3 className="text-xl font-semibold mb-1 group-hover:text-primary transition-colors">
               {bot.name}
             </h3>
-            <p className="text-sm text-muted-foreground line-clamp-2">{bot.description}</p>
+            <p className="text-sm text-muted-foreground line-clamp-2">{translatedDescription}</p>
             <div className="flex items-center gap-1.5 mt-2 text-xs text-muted-foreground">
               <Calendar className="w-3.5 h-3.5" />
               <span>{t('botCard.runningSince')} {formattedDate}</span>

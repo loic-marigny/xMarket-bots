@@ -16,6 +16,13 @@
     "runningSince": "Running since",
     "viewDetails": "View details"
   },
+  "botDescriptions": {
+    "1": "Fast scalping bot based on momentum and volume indicators",
+    "2": "Exploits mean reversion on major pairs",
+    "3": "Follows long-term trends with multi-timeframe confirmation",
+    "5": "Logistic regression targeting mega-cap tech mean reversion",
+    "6": "Gradient boosting signals on 5-day stock trends"
+  },
   "botDetail": {
     "back": "Back",
     "strategy": "Strategy",

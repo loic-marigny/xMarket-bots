@@ -16,6 +16,13 @@
     "runningSince": "Depuis",
     "viewDetails": "Voir les détails"
   },
+  "botDescriptions": {
+    "1": "Bot de scalping rapide basé sur le momentum et les indicateurs de volume",
+    "2": "Exploite les retours à la moyenne sur les paires majeures",
+    "3": "Suit les tendances de long terme avec confirmation multi-timeframe",
+    "5": "Régression logistique ciblant le retour à la moyenne des grandes valeurs technologiques",
+    "6": "Signaux de gradient boosting sur les tendances boursières à 5 jours"
+  },
   "botDetail": {
     "back": "Retour",
     "strategy": "Stratégie",
